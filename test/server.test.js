@@ -1,12 +1,39 @@
 'use strict';
-const app = require('../server');
+const {app, runServer, closeServer} = require('../server');
+const {PORT, TEST_DATABASE_URL} = require('../config')
+const seedNotes = require('../db/seed/notes')
+const Note = require('../models/note.js')
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const chaiSpies = require('chai-spies');
 const expect = chai.expect;
-
+const mongoose = require('mongoose')
 chai.use(chaiHttp);
 chai.use(chaiSpies);
+
+before(function(){
+  return runServer(TEST_DATABASE_URL, PORT)
+})
+beforeEach(function(){
+  console.log('======================')
+  console.log('======================')
+  console.log('re-seeding database')
+  return seed()
+})
+afterEach(function(){
+  return tearDownDb()
+})
+after(function(){
+  return closeServer()
+})
+
+function seed(){
+  return Note.insertMany(seedNotes)
+}
+function tearDownDb(){
+  console.warn('Deleting database')
+  return mongoose.connection.db.dropDatabase()
+}
 
 describe('Reality Check', () => {
 

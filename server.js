@@ -1,15 +1,12 @@
 'use strict';
 
 const express = require('express');
-const morgan = require('morgan');
-
-const { PORT } = require('./config');
-
+const mongoose = require('mongoose');
+const morgan = require('morgan')
+const { PORT, MONGODB_URL } = require('./config');
 const notesRouter = require('./routes/notes');
-
 // Create an Express application
 const app = express();
-
 // Log all requests. Skip logging during
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
   skip: () => process.env.NODE_ENV === 'test'
@@ -41,9 +38,60 @@ app.use(function (err, req, res, next) {
   });
 });
 
+let server
 // Listen for incoming connections
-app.listen(PORT, function () {
-  console.info(`Server listening on ${this.address().port}`);
-}).on('error', err => {
-  console.error(err);
-});
+function runServer(DATABASE_URL = MONGODB_URL, port=PORT){
+
+  return new Promise( (resolve, reject) => {
+    mongoose.connect(DATABASE_URL, err => {
+      if(err){
+        return reject(err)
+      }
+      server = app.listen(port,() => {
+        // console.info(`Server listening on ${this.address().port}`);
+        console.log('server started')
+        resolve();
+      })
+        .on('error', err => {
+          mongoose.disconnect()
+          reject(err)
+        })
+    })
+  })
+}
+
+function closeServer() {
+  return mongoose.disconnect().then(()=> {
+    return new Promise( (resolve, reject) => {
+      console.log('closing server')
+      server.close(err => {
+        if(err) {
+          return reject(err)
+        }
+        resolve()
+      })
+    })
+  })
+}
+// return  mongoose.connect(DATABASE_URL)
+//   .then(instance => {
+//     const conn = instance.connections[0]
+//     console.info(`Connected to :mongodb://${conn.host}:${conn.port}/${conn.name}`)
+//   })
+//   .catch(err => {
+//     console.error(`Error :${err.message}`)
+//     console.error('\n === Did you remember to start `mongod`? === \n')
+//     console.error(err)
+//   })
+
+if(require.main === module){
+  runServer()
+  // app.listen(PORT, function () {
+  //   console.info(`Server listening on ${this.address().port}`);
+  // }).on('error', err => {
+  //   console.error(err);
+  // });
+}
+
+module.exports = {app, runServer, closeServer}
+
