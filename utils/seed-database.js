@@ -6,7 +6,7 @@ const Note = require('../models/note')
 
 const seedNotes = require('../db/seed/notes')
 
-mongoose.connect(MONGODB_URL)
+mongoose.connect('mongodb://zhy0391:5408@ds235768.mlab.com:35768/notefulv3')
   .then(()=> {
     return mongoose.connection.db.dropDatabase()
       .then(result => {
