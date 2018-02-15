@@ -5,15 +5,10 @@ const Note = require('../models/note')
 
 mongoose.connect(MONGODB_URL)
   .then(()=>{
-    return Note.find(
-      // remember to reseed database when change model structure
-      {$text: {$search: 'lady gaga'} },
-      {score: {$meta: 'textScore'} })
-      .sort({score: {$meta :'textScore'} } )
-      .then(console.log)
-      .catch(console.error)
+    return Note.findById('000000000000000000000002')
   })
-  .then(()=>{
+  .then((res)=>{
+    console.log(res)
     return mongoose.disconnect()
       .then(()=>{
         console.info('Disconnected')
