@@ -90,7 +90,9 @@ const noteful = (function () {
    * HELPERS
    */
   function getNoteIdFromElement(item) {
+    console.log(item)
     const id = $(item).closest('.js-note-element').data('id');
+    console.log(id)
     return id;
   }
 
