@@ -117,6 +117,22 @@ describe('GET end point', function() {
         expect(res.body.message).to.eq('The `id` is not valid')
       })
   })
+  it('should respond with a 400 for item does not exist', function(){
+    const badId = '000000000000000000000009'
+    const spy = chai.spy()
+    return chai.request(app).get(`/v3/notes/${badId}`)
+      .then(spy)
+      .then(()=> {
+        expect(spy).to.not.have.been.called()
+      })
+      .catch(err => {
+        const res = err.response
+        expect(res).to.have.status(400)
+        expect(res.body.message).to.eq('The item does not exist')
+      })
+  })
+
+  
 
   it('should return one response on v3/notes/:id', function(){
     let data

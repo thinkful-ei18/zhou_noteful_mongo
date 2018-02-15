@@ -33,6 +33,11 @@ router.get('/notes/:id', (req, res, next) => {
   }
   Note.findById(noteId)
     .then(result=> {
+      if(result === null){
+        const err = new Error('The item does not exist')
+        err.status = 400
+        return next(err)
+      }
       return res.status(200).json(result)
     })
     .catch(next)
