@@ -10,7 +10,8 @@
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",
-		"test": "cross-env NODE_ENV=test mocha --exit",
+		"dev": "nodemon server.js",
+		"test": "cross-env NODE_ENV=test mocha --timeout 15000 --exit",
 		"cover": "nyc --reporter=lcov --reporter=text-summary npm test"
 	},
 	"dependencies": {

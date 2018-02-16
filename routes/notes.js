@@ -7,13 +7,12 @@ const Note = require('../models/note')
 const mongoose = require('mongoose')
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {
-  const {searchTerm} = req.query
+  const {searchTerm,folderId} = req.query
   const filter = {}
-  filter.search = searchTerm
-    ?{$text: {$search: searchTerm}}
-    :{}
+  if(searchTerm){filter['$text'] = {$search: searchTerm}}
+  if(folderId){filter['folder_id'] = folderId}
   Note.find(
-    filter.search,
+    filter,
     {score:{$meta:'textScore'}}
   )
     .sort({score:{$meta:'textScore'}})
@@ -46,10 +45,10 @@ router.get('/notes/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
-  const {title, content} = req.body
+  const {title, content, folderId} = req.body
   const err = validTitle(title)
   if(err) return next(err)
-  Note.create({title,content})
+  Note.create({title,content, folder_id: folderId})
     .then(result => {
       return res.location(`${req.originalUrl}/${result._doc._id}`).status(201).json(result)
     })
@@ -59,7 +58,7 @@ router.post('/notes', (req, res, next) => {
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
-  const {title, content} = req.body
+  const {title, content, folderId} = req.body
   const err = validTitle(title)
   if(err) return next(err)
   if(!mongoose.Types.ObjectId.isValid(noteId)){
@@ -67,7 +66,7 @@ router.put('/notes/:id', (req, res, next) => {
     err2.status = 400
     return next(err2)
   }
-  const updateObj = {title, content}
+  const updateObj = {title, content, folder_id: folderId}
   Note.findByIdAndUpdate(noteId,updateObj,{new:true})
     .then(result => {
       return res.status(201).json(result)
@@ -79,7 +78,7 @@ router.put('/notes/:id', (req, res, next) => {
 router.delete('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
   if(!mongoose.Types.ObjectId.isValid(noteId)){
-    const err = new Error(`${noteId} does not exist`)
+    const err = new Error('improper id')
     err.status = 400
     return next(err)
   }
@@ -89,7 +88,6 @@ router.delete('/notes/:id', (req, res, next) => {
     })
 })
 module.exports = router;
-
 //========== Validation methods =========================
 function validTitle(title){
   if(!title){

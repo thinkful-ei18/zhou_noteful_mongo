@@ -3,8 +3,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan')
-const { PORT, MONGODB_URL } = require('./config');
+const { PORT, MONGODB_URL, TEST_DATABASE_URL } = require('./config');
 const notesRouter = require('./routes/notes');
+const foldersRouter = require('./routes/router.folders')
 // Create an Express application
 const app = express();
 // Log all requests. Skip logging during
@@ -20,6 +21,7 @@ app.use(express.json());
 
 // Mount router on "/api"
 app.use('/v3', notesRouter);
+app.use('/v3',foldersRouter)
 
 // Catch-all 404
 app.use(function (req, res, next) {
@@ -38,60 +40,25 @@ app.use(function (err, req, res, next) {
   });
 });
 
-let server
-// Listen for incoming connections
-function runServer(DATABASE_URL = MONGODB_URL, port=PORT){
-
-  return new Promise( (resolve, reject) => {
-    mongoose.connect(DATABASE_URL, err => {
-      if(err){
-        return reject(err)
-      }
-      server = app.listen(port,() => {
-        // console.info(`Server listening on ${this.address().port}`);
-        console.log('server started')
-        resolve();
-      })
-        .on('error', err => {
-          mongoose.disconnect()
-          reject(err)
-        })
-    })
-  })
-}
-
-function closeServer() {
-  return mongoose.disconnect().then(()=> {
-    return new Promise( (resolve, reject) => {
-      console.log('closing server')
-      server.close(err => {
-        if(err) {
-          return reject(err)
-        }
-        resolve()
-      })
-    })
-  })
-}
-// return  mongoose.connect(DATABASE_URL)
-//   .then(instance => {
-//     const conn = instance.connections[0]
-//     console.info(`Connected to :mongodb://${conn.host}:${conn.port}/${conn.name}`)
-//   })
-//   .catch(err => {
-//     console.error(`Error :${err.message}`)
-//     console.error('\n === Did you remember to start `mongod`? === \n')
-//     console.error(err)
-//   })
 
 if(require.main === module){
-  runServer()
-  // app.listen(PORT, function () {
-  //   console.info(`Server listening on ${this.address().port}`);
-  // }).on('error', err => {
-  //   console.error(err);
-  // });
+  mongoose.connect(MONGODB_URL)
+    .then(instance => {
+      const conn = instance.connections[0]
+      console.info(`Connected to :mongodb://${conn.host}:${conn.port}/${conn.name}`)
+    })
+    .catch(err => {
+      console.error(`Error :${err.message}`)
+      console.error('\n === Did you remember to start `mongod`? === \n')
+      console.error(err)
+    })
+    
+  app.listen(PORT, function () {
+    console.info(`Server listening on ${this.address().port}`);
+  }).on('error', err => {
+    console.error(err);
+  });
 }
 
-module.exports = {app, runServer, closeServer}
+module.exports = app
 

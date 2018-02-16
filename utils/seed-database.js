@@ -1,32 +1,20 @@
 const mongoose = require('mongoose')
-mongoose.Promise = global.Promise
-
-const{ MONGODB_URL} = require('../config')
+const{ MONGODB_URL, TEST_DATABASE_URL} = require('../config')
 const Note = require('../models/note')
+const Folder = require('../models/folder')
 
 const seedNotes = require('../db/seed/notes')
-
-mongoose.connect('mongodb://zhy0391:5408@ds235768.mlab.com:35768/notefulv3')
-  .then(()=> {
-    return mongoose.connection.db.dropDatabase()
-      .then(result => {
-        console.log(`Dropped Database: ${result}`)
-      })
-  })
-  .then(()=> {
-    return Note.insertMany(seedNotes)
-      .then(results => {
-        console.info(`Inserted ${results.length} Notes`)
-      })
-  })
-  .then(()=> {
-    return mongoose.disconnect()
-      .then(()=> {
-        console.info('Disconnected')
-      })
-  })
+const seedFolders = require('../db/seed/folders')
+mongoose.connect(TEST_DATABASE_URL)
+  .then(()=> mongoose.connection.db.dropDatabase())
+  .then(()=> Folder.insertMany(seedFolders))
+  .then(()=> Note.insertMany(seedNotes))
+  .then(()=> Note.createIndexes())
+  .then(()=> Folder.createIndexes())
+  .then(()=> mongoose.disconnect())
   .catch(err => {
     console.error(`Error: ${err.message}`)
     console.error(err)
   })
+
 
