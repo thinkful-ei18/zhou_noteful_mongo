@@ -15,7 +15,7 @@ router.get('/notes', (req, res, next) => {
     filter,
     {score:{$meta:'textScore'}}
   )
-    .sort({score:{$meta:'textScore'}})
+    .sort({score:{$meta:'textScore'}}) 
     .then(results => {
       if(results.length) return res.status(200).json(results)
       next()

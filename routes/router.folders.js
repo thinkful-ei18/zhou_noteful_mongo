@@ -22,10 +22,10 @@ router.get('/folders/:id', (req,res,next) => {
   if(err) return next(err)
   Folder.findById(reqId)
     .then(result => {
-      if(res){
+      if(result){
         return res.status(200).json(result)
       }
-      const err = new Error('the item does not exist')
+      const err = new Error('The item does not exist')
       err.status = 400
       next(err)
     })
@@ -41,22 +41,21 @@ router.put('/folders/:id', (req,res,next) => {
   if(err) return next(err)
   const update = {name}
   Folder.findByIdAndUpdate(reqId,update,{new:true})
-    .then(res => {
-      if(res){
-        return res.status(201).json(res)
+    .then(result => {
+      if(result){
+        return res.status(201).json(result)
       }
       next()
     })
     .catch(err => {
       if(err.code === 11000){
         const err = new Error('folder name has already exist')
-        err.status = 400
+        err.status = 404
         return next(err)
       }
       next(err)
     })
 })
-
 
 router.post('/folders', (req,res,next)=> {
   const {name} = req.body
@@ -65,12 +64,12 @@ router.post('/folders', (req,res,next)=> {
   const newItem = {name}
   Folder.create(newItem)
     .then(result => {
-      res.location(`${req.originalUrl}/${result._doc._id}`).status(201).end()
+      res.location(`${req.originalUrl}/${result.id}`).status(201).end()
     })
     .catch(err => {
       if(err.code === 11000){
         const err = new Error('folder name has already exist')
-        err.status = 400
+        err.status = 404
         return next(err)
       }
       next(err)
@@ -94,7 +93,7 @@ router.delete('/folders/:id', (req,res,next) => {
 
 function validateMissingField(field){
   if(!field){
-    const err = `missing ${field}`
+    const err = new Error('missing field')
     err.status = 400
     return err
   }

@@ -15,7 +15,8 @@ chai.use(chaiSpies)
 describe('Note End Point', function() {
 
   before(function () {
-    return mongoose.connect(TEST_DATABASE_URL);
+    return mongoose.connect(TEST_DATABASE_URL)
+      .then(()=> mongoose.connection.db.dropDatabase())
   });
   after(function () {
     return mongoose.disconnect();
@@ -48,13 +49,13 @@ describe('Note End Point', function() {
       const spy = chai.spy()
       return chai.request(app).get(`/v3/notes/${badId}`)
         .then(spy)
-        .then(()=> {
-          expect(spy).to.not.have.been.called()
-        })
         .catch(err => {
           const res = err.response
           expect(res).to.have.status(400)
           expect(res.body.message).to.eq('The `id` is not valid')
+        })
+        .then(()=> {
+          expect(spy).to.not.have.been.called()
         })
     })
     it('should respond with a 400 for item does not exist', function(){
@@ -110,9 +111,7 @@ describe('Note End Point', function() {
           body = res.body;
           expect(res).to.have.status(201);
           expect(res).to.have.header('location');
-          expect(res).to.be.json;
           expect(body).to.be.a('object');
-          expect(body).to.include.keys('id', 'title', 'content');
           // 2) **then** call the database
           return Note.findById(body.id);
         })
@@ -158,13 +157,13 @@ describe('Note End Point', function() {
       const spy = chai.spy()
       return chai.request(app).put(`/v3/notes/${noteId}`).send(updateData)
         .then(spy)
-        .then(()=>{
-          expect(spy).to.not.be.called()
-        })
         .catch(err => {
           const res = err.response
           expect(res).to.have.status(400)
           expect(res.body.message).to.equal('not a valid id')
+        })
+        .then(()=>{
+          expect(spy).to.not.be.called()
         })
     })
   
@@ -178,13 +177,13 @@ describe('Note End Point', function() {
         return chai.request(app).put(`/v3/notes/${data.id}`).send(updateData)
       })
         .then(spy)
-        .then(()=>{
-          expect(spy).to.not.be.called()
-        })
         .catch(err => {
           const res = err.response
           expect(res).to.have.status(400)
           expect(res.body.message).to.equal('missing title')
+        })
+        .then(()=>{
+          expect(spy).to.not.be.called()
         })
     })
   })
