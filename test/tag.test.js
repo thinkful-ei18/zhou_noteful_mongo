@@ -126,74 +126,74 @@ describe('Tags End Point', function() {
     })
   });
   
-  // describe('Update route on /v3/folders/:id', function(){
+  describe('Update route on /v3/tags/:id', function(){
   
-  //   it('should return the updated result', function() {
-  //     const updateData = {
-  //       name:'not my taste'
-  //     }
-  //     let data
-  //     return Folder.findOne()
-  //       .then(_data => {
-  //         data = _data
-  //         return chai.request(app).put(`/v3/folders/${data.id}`).send(updateData)
-  //       })
-  //       .then(res=> {
-  //         expect(res).to.have.status(201)
-  //         expect(res).to.have.be.json
-  //         expect(res.body).to.be.an('object')
-  //         // comparison
-  //         expect(res.body.id).to.equal(data.id)
-  //         expect(res.body.name).to.equal(updateData.name)
-  //       })
-  //   })
+    it('should return the updated result', function() {
+      const updateData = {
+        name:'not my taste'
+      }
+      let data
+      return Tag.findOne()
+        .then(_data => {
+          data = _data
+          return chai.request(app).put(`/v3/tags/${data.id}`).send(updateData)
+        })
+        .then(res=> {
+          expect(res).to.have.status(201)
+          expect(res).to.have.be.json
+          expect(res.body).to.be.an('object')
+          // comparison
+          expect(res.body.id).to.equal(data.id)
+          expect(res.body.name).to.equal(updateData.name)
+        })
+    })
   
-  //   it('should not be allowed to update duplicate folder', function(){
-  //     const spy = chai.spy()
-  //     return chai.request(app).put('/v3/folders/111111111111111111111101').send({name:'Archive'})
-  //       .catch(err => {
-  //         const res = err.response
-  //         expect(res).to.have.status(404)
-  //         expect(res.body.message).to.equal('folder name has already exist')
-  //         return 
-  //       })
-  //   })
+    it('should not be allowed to update duplicate folder', function(){
+      const spy = chai.spy()
+      return chai.request(app).put('/v3/tags/222222222222222222222201').send({name:'foo'})
+        .catch(err => {
+          const res = err.response
+          expect(res).to.have.status(404)
+          expect(res.body.message).to.equal('tag name has already exist')
+          return 
+        })
+    })
 
-  //   it('should respond with 400 when try to update an improper id', function() {
-  //     const updateData = {
-  //       name:'I have a good name'
-  //     }
-  //     const noteId = '387387587'
-  //     const spy = chai.spy()
-  //     return chai.request(app).put(`/v3/folders/${noteId}`).send(updateData)
-  //       .then(spy)
-  //       .catch(err => {
-  //         const res = err.response
-  //         expect(res).to.have.status(400)
-  //         expect(res.body.message).to.equal('improper formatted id')
-  //       })
-  //       .then(()=>{
-  //         expect(spy).to.not.be.called()
-  //       })
-  //   })
+    it('should respond with 400 when try to update an improper id', function() {
+      const updateData = {
+        name:'I have a good name'
+      }
+      const noteId = '387387587'
+      const spy = chai.spy()
+      return chai.request(app).put(`/v3/tags/${noteId}`).send(updateData)
+        .then(spy)
+        .catch(err => {
+          const res = err.response
+          expect(res).to.have.status(400)
+          expect(res.body.message).to.equal('improper formatted id')
+        })
+        .then(()=>{
+          expect(spy).to.not.be.called()
+        })
+    })
   
-  //   it('should respond `missing field` when try to update without field', function() {
-  //     const updateData = {foo: 'not me'}
-  //     const spy = chai.spy()
-  //     return Folder.findOne().then(data => {
-  //       return chai.request(app).put(`/v3/folders/${data.id}`).send(updateData)
-  //     })
-  //       .then(spy)
-  //       .catch(err => {
-  //         const res = err.response
-  //         expect(res).to.have.status(400)
-  //         expect(res.body.message).to.equal('missing field')
-  //       })
-  //       .then(()=>{
-  //         expect(spy).to.not.be.called()
-  //       })
-  //   })
-  // })
+    it('should respond `missing field` when try to update without field', function() {
+      const updateData = {loo: 'not me'}
+      const spy = chai.spy()
+      return Tag.findOne().then(data => {
+        return chai.request(app).put(`/v3/tags/${data.id}`).send(updateData)
+      })
+        .then(spy)
+        .catch(err => {
+          const res = err.response
+          expect(res).to.have.status(400)
+          expect(res.body.message).to.equal('missing name')
+        })
+        .then(()=>{
+          expect(spy).to.not.be.called()
+        })
+    })
+  })
   
   // describe(' v3/folders/:id DELETE ', function(){
     

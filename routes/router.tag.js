@@ -51,8 +51,37 @@ router.post('/tags', (req,res,next) => {
     })
 })
 
-router.put('/tags', (req,res,next) => {
-
+router.put('/tags/:id', (req,res,next) => {
+  const {name} = req.body
+  const tagId = req.params.id
+  if(!name) {
+    const err = new Error('missing name')
+    err.status = 400
+    return next(err)
+  }
+  if(!mongoose.Types.ObjectId.isValid(tagId)){
+    const err = new Error('improper formatted id')
+    err.status = 400
+    return next(err)
+  }
+  const tag = {name}
+  Tag.findByIdAndUpdate(tagId,tag,{new:true})
+    .then(result => {
+      if(result){
+        res.status(201).json(result)
+      }
+      const err = new Error('The item does not exist')
+      err.status = 400
+      return next(err)
+    })
+    .catch(err => {
+      if(err.code === 11000){
+        err = new Error('tag name has already exist')
+        err.status = 404
+        return next(err)
+      }
+      next(err)
+    })
 })
 
 router.delete('/tags:id', (req,res,next) => {
