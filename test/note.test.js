@@ -86,7 +86,7 @@ describe('Note End Point', function() {
           expect(res).to.have.status(200)
           expect(res).to.be.json
           expect(res.body).to.be.an('object')
-          expect(res.body).to.have.keys('id','title','content','created')
+          expect(res.body).to.have.keys('id','title','content','created','folder_id','tags')
           //comparison
           expect(res.body.id).to.equal(data.id)
           expect(res.body.title).to.equal(data.title)

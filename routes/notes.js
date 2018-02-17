@@ -4,6 +4,8 @@ const express = require('express');
 // Create an router instance (aka "mini-app")
 const router = express.Router();
 const Note = require('../models/note')
+const Folder = require('../models/folder')
+const Tag = require('../models/tag')
 const mongoose = require('mongoose')
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {
@@ -15,7 +17,9 @@ router.get('/notes', (req, res, next) => {
     filter,
     {score:{$meta:'textScore'}}
   )
-    .sort({score:{$meta:'textScore'}}) 
+    .sort({score:{$meta:'textScore'}})
+    .populate('folder_id')
+    .populate('tags')
     .then(results => {
       if(results.length) return res.status(200).json(results)
       next()
@@ -31,8 +35,9 @@ router.get('/notes/:id', (req, res, next) => {
     return next(err)
   }
   Note.findById(noteId)
+    .populate('folder_id')
+    .populate('tags')
     .then(result=> {
-      console.log('here is the id: ', result)
       if(!result){
         const err = new Error('The item does not exist')
         err.status = 400
@@ -45,10 +50,10 @@ router.get('/notes/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
-  const {title, content, folderId} = req.body
+  const {title, content, folderId, tags} = req.body
   const err = validTitle(title)
   if(err) return next(err)
-  Note.create({title,content, folder_id: folderId})
+  Note.create({title,content, folder_id: folderId, tags})
     .then(result => {
       return res.location(`${req.originalUrl}/${result._doc._id}`).status(201).json(result)
     })
@@ -58,7 +63,7 @@ router.post('/notes', (req, res, next) => {
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
-  const {title, content, folderId} = req.body
+  const {title, content, folderId, tags} = req.body
   const err = validTitle(title)
   if(err) return next(err)
   if(!mongoose.Types.ObjectId.isValid(noteId)){
@@ -66,7 +71,7 @@ router.put('/notes/:id', (req, res, next) => {
     err2.status = 400
     return next(err2)
   }
-  const updateObj = {title, content, folder_id: folderId}
+  const updateObj = {title, content, folder_id: folderId, tags}
   Note.findByIdAndUpdate(noteId,updateObj,{new:true})
     .then(result => {
       return res.status(201).json(result)

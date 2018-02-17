@@ -6,6 +6,7 @@ const morgan = require('morgan')
 const { PORT, MONGODB_URL, TEST_DATABASE_URL } = require('./config');
 const notesRouter = require('./routes/notes');
 const foldersRouter = require('./routes/router.folders')
+const tagRouter = require('./routes/router.tag')
 // Create an Express application
 const app = express();
 // Log all requests. Skip logging during
@@ -22,6 +23,7 @@ app.use(express.json());
 // Mount router on "/api"
 app.use('/v3', notesRouter);
 app.use('/v3',foldersRouter)
+app.use('/v3',tagRouter)
 
 // Catch-all 404
 app.use(function (req, res, next) {
