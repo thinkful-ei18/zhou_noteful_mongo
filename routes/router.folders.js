@@ -82,7 +82,7 @@ router.delete('/folders/:id', (req,res,next) => {
   if(err) return next(err)
   Folder.findByIdAndRemove(reqId)
     .then(() => {
-      return Note.deleteMany({folder_id: reqId})
+      return Note.deleteMany({folderId: reqId})
     })
     .then(()=> {
       res.status(204).end()

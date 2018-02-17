@@ -118,9 +118,7 @@ describe('Folder End Point', function() {
     })
 
     it('should not be allowed to post duplicate folder', function(){
-      const spy = chai.spy()
       return chai.request(app).post('/v3/folders').send({name:'Archive'})
-
         .catch(err =>{
           const res = err.response
           expect(res).to.have.status(404)
@@ -153,13 +151,11 @@ describe('Folder End Point', function() {
     })
   
     it('should not be allowed to update duplicate folder', function(){
-      const spy = chai.spy()
       return chai.request(app).put('/v3/folders/111111111111111111111101').send({name:'Archive'})
         .catch(err => {
           const res = err.response
           expect(res).to.have.status(404)
           expect(res.body.message).to.equal('folder name has already exist')
-          return 
         })
     })
 

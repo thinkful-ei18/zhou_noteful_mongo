@@ -10,17 +10,17 @@ $(document).ready(function () {
       noteful.render();
     });
 
-  // api.search('/v3/folders')
-  //   .then(response => {
-  //     store.folders = response;
-  //     noteful.render();
-  //   });
+  api.search('/v3/folders')
+    .then(response => {
+      store.folders = response;
+      noteful.render();
+    });
 
-  // api.search('/v3/tags')
-  //   .then(response => {
-  //     store.tags = response;
-  //     noteful.render();
-  //   });
+  api.search('/v3/tags')
+    .then(response => {
+      store.tags = response;
+      noteful.render();
+    });
 
 });
 

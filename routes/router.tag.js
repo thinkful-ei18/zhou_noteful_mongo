@@ -21,7 +21,7 @@ router.get('/tags/:id', (req,res,next) => {
   }
   Tag.findById(tagId)
     .then(result => {
-      if(result){res.status(200).json(result)}
+      if(result){return res.status(200).json(result)}
       const err = new Error('The item does not exist')
       err.status = 400
       return next(err)
@@ -68,7 +68,7 @@ router.put('/tags/:id', (req,res,next) => {
   Tag.findByIdAndUpdate(tagId,tag,{new:true})
     .then(result => {
       if(result){
-        res.status(201).json(result)
+        return res.status(201).json(result)
       }
       const err = new Error('The item does not exist')
       err.status = 400
@@ -84,8 +84,25 @@ router.put('/tags/:id', (req,res,next) => {
     })
 })
 
-router.delete('/tags:id', (req,res,next) => {
-
+router.delete('/tags/:id', (req,res,next) => {
+  const tagId = req.params.id
+  if(!mongoose.Types.ObjectId.isValid(tagId)){
+    const err = new Error('improper formatted id')
+    err.status = 400
+    return next(err)
+  }
+  Tag.findByIdAndRemove(tagId)
+    .then(() => {
+      console.log('I success delete tagid')
+      return Note.updateMany(
+        {tags:tagId},
+        {$pull: {tags: tagId}}
+      )
+    })
+    .then(() => {
+      res.status(204).end()
+    })
+    .catch(next)
 })
 
 module.exports = router

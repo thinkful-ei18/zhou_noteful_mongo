@@ -1,8 +1,11 @@
 const app = require('../server')
 const {TEST_DATABASE_URL} = require('../config')
 const Tag = require('../models/tag')
+const Note = require('../models/note')
 const mongoose = require('mongoose')
 const seedTags = require('../db/seed/tags')
+const seedNotes = require('../db/seed/notes')
+
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const chaiSpies = require('chai-spies')
@@ -20,13 +23,17 @@ describe('Tags End Point', function() {
     return mongoose.disconnect();
   });
   beforeEach(function () {
-    return Tag.insertMany(seedTags)
+    return Promise.all([Tag.insertMany(seedTags),
+      Note.insertMany(seedNotes),
+      Tag.createIndexes(),
+      Note.createIndexes()])
   });
+
   afterEach(function () {
     return mongoose.connection.db.dropDatabase();
   });
 
-  describe('Folder GET end point', function() {
+  describe('Tag GET end point', function() {
     it('should return all existing data', function(){
       const dbCall = Tag.find()
       const serverCall = chai.request(app).get('/v3/tags')
@@ -149,13 +156,11 @@ describe('Tags End Point', function() {
     })
   
     it('should not be allowed to update duplicate folder', function(){
-      const spy = chai.spy()
-      return chai.request(app).put('/v3/tags/222222222222222222222201').send({name:'foo'})
+      return chai.request(app).put('/v3/tags/222222222222222222222202').send({name:'foo'})
         .catch(err => {
           const res = err.response
           expect(res).to.have.status(404)
           expect(res.body.message).to.equal('tag name has already exist')
-          return 
         })
     })
 
@@ -195,36 +200,36 @@ describe('Tags End Point', function() {
     })
   })
   
-  // describe(' v3/folders/:id DELETE ', function(){
+  describe(' v3/tags/:id DELETE ', function(){
     
-  //   it('should return a response on  success delete', function(){
-  //     let data;
-  //     return Folder.findOne()
-  //       .then( _data => {
-  //         data = _data
-  //         return chai.request(app).delete(`/v3/folders/${data.id}`)
-  //       })
-  //       .then(res => {
-  //         expect(res).to.have.status(204)
-  //         expect(res.body).to.be.empty
-  //         return Folder.findById(data.id)
-  //       })
-  //       .then(data => {
-  //         // confirm that database is cleared
-  //         expect(data).to.equal(null)
-  //       })
-  //   })
+    it('should return a response on  success delete', function(){
+      let tagId = '222222222222222222222201'
+      return chai.request(app).delete(`/v3/tags/${tagId}`)
+        .then(res => {
+          expect(res).to.have.status(204)
+          expect(res.body).to.be.empty
+          return Tag.findById(tagId)
+        })
+        .then(data => {
+          // confirm that database is cleared
+          expect(data).to.equal(null)
+          return Note.find({tags: tagId})
+        })
+        .then(results => {
+          expect(results).to.be.empty
+        })
+    })
   
-  //   it('should warn status 400 when tried to delete improper id',function(){
-  //     const badId = '1458'
-  //     return chai.request(app).delete(`/v3/folders/${badId}`)
-  //       .catch(err => {
-  //         const res = err.response
-  //         expect(err).to.have.status(400)
-  //         expect(res.body.message).to.equal('improper formatted id')
-  //       })
-  //   })
-  // })
+    it('should warn status 400 when tried to delete improper id',function(){
+      const badId = '1458'
+      return chai.request(app).delete(`/v3/tags/${badId}`)
+        .catch(err => {
+          const res = err.response
+          expect(err).to.have.status(400)
+          expect(res.body.message).to.equal('improper formatted id')
+        })
+    })
+  })
 })
 
 

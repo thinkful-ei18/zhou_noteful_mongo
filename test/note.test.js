@@ -33,7 +33,7 @@ describe('Note End Point', function() {
   });
 
   describe('Note GET end point', function() {
-    it('should return all existing data', function(){
+    it('should return all existing data on Get /v3/notes', function(){
       const dbCall = Note.find()
       const serverCall = chai.request(app).get('/v3/notes')
       return Promise.all([dbCall, serverCall])
@@ -44,6 +44,23 @@ describe('Note End Point', function() {
           expect(res.body).to.have.length(data.length);
         })
     })
+
+    it('should narrow final results with query on Get /v3/notes', function(){
+      const query = 
+      {
+        searchTerm : 'gaga',
+        folderId : '111111111111111111111100',
+        tagId:'222222222222222222222200'
+      }
+      return chai.request(app).get('/v3/notes?searchTerm=gaga&folderId=111111111111111111111100&222222222222222222222200')
+        .then(res => {
+          expect(res).to.have.status(200);
+          expect(res).to.be.json;
+          expect(res.body).to.have.length(2);
+          console.log(res.body.folderId)
+        })
+    })
+
     it('should respond with a 400 for improper format id', function(){
       const badId = '000-3-00000000'
       const spy = chai.spy()
@@ -86,7 +103,7 @@ describe('Note End Point', function() {
           expect(res).to.have.status(200)
           expect(res).to.be.json
           expect(res.body).to.be.an('object')
-          expect(res.body).to.have.keys('id','title','content','created','folder_id','tags')
+          expect(res.body).to.have.keys('id','title','content','created','folderId','tags')
           //comparison
           expect(res.body.id).to.equal(data.id)
           expect(res.body.title).to.equal(data.title)
@@ -128,7 +145,8 @@ describe('Note End Point', function() {
     it('should return the updated result', function() {
       const updateData = {
         title: 'not a good day',
-        content:'It could be worse'
+        content:'It could be worse',
+        tags:['222222222222222222222200','222222222222222222222201']
       }
       let data
       return Note.findOne()
@@ -145,6 +163,7 @@ describe('Note End Point', function() {
           expect(res.body.id).to.equal(data.id)
           expect(res.body.title).to.equal(updateData.title)
           expect(res.body.content).to.equal(updateData.content)
+          expect(res.body.tags).to.have.lengthOf(2)
         })
     })
   

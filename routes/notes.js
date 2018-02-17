@@ -9,16 +9,17 @@ const Tag = require('../models/tag')
 const mongoose = require('mongoose')
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {
-  const {searchTerm,folderId} = req.query
+  const {searchTerm,folderId,tagId} = req.query
   const filter = {}
   if(searchTerm){filter['$text'] = {$search: searchTerm}}
-  if(folderId){filter['folder_id'] = folderId}
+  if(folderId){filter['folderId'] = folderId}
+  if(tagId){filter['tags'] = {$eq: tagId}}
   Note.find(
     filter,
     {score:{$meta:'textScore'}}
   )
     .sort({score:{$meta:'textScore'}})
-    .populate('folder_id')
+    .populate('folderId')
     .populate('tags')
     .then(results => {
       if(results.length) return res.status(200).json(results)
@@ -35,7 +36,7 @@ router.get('/notes/:id', (req, res, next) => {
     return next(err)
   }
   Note.findById(noteId)
-    .populate('folder_id')
+    .populate('folderId')
     .populate('tags')
     .then(result=> {
       if(!result){
@@ -53,7 +54,7 @@ router.post('/notes', (req, res, next) => {
   const {title, content, folderId, tags} = req.body
   const err = validTitle(title)
   if(err) return next(err)
-  Note.create({title,content, folder_id: folderId, tags})
+  Note.create({title,content, folderId: folderId, tags})
     .then(result => {
       return res.location(`${req.originalUrl}/${result._doc._id}`).status(201).json(result)
     })
@@ -71,7 +72,7 @@ router.put('/notes/:id', (req, res, next) => {
     err2.status = 400
     return next(err2)
   }
-  const updateObj = {title, content, folder_id: folderId, tags}
+  const updateObj = {title, content, folderId: folderId, tags}
   Note.findByIdAndUpdate(noteId,updateObj,{new:true})
     .then(result => {
       return res.status(201).json(result)
