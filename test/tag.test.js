@@ -88,47 +88,43 @@ describe('Tags End Point', function() {
     })
   })
   
-  // describe('POST /v3/folders', function () {
-  //   it('should create and return a new item when provided valid data', function () {
-  //     const newItem = {
-  //       'name': 'Ready',
-  //     };
-  //     return chai.request(app)
-  //       .post('/v3/folders')
-  //       .send(newItem)
-  //       .then(function (res) {
-  //         expect(res).to.have.status(201);
-  //         expect(res).to.have.header('location');
-  //       })
-  //   });
+  describe('POST /v3/tags', function () {
+    it('should create and return a new item when provided valid data', function () {
+      const newItem = {
+        'name': 'Ready'
+      };
+      return chai.request(app)
+        .post('/v3/tags')
+        .send(newItem)
+        .then(function (res) {
+          expect(res).to.have.status(201);
+          expect(res).to.have.header('location');
+        })
+    });
 
-  //   it('should return error 400 trying to post an missing field', function(){
-  //     const newItem = {random: 'not a thing'}
-  //     const spy = chai.spy()
-  //     // 1) First, call the API
-  //     return chai.request(app)
-  //       .post('/v3/folders')
-  //       .send(newItem)
+    it('should return error 400 trying to post an missing field', function(){
+      const newItem = {random: 'not a thing'}
+      const spy = chai.spy()
+      // 1) First, call the API
+      return chai.request(app)
+        .post('/v3/tags')
+        .send(newItem)
+        .catch(err => {
+          const res = err.response
+          expect(res).to.have.status(400)
+          expect(res.body.message).to.equal('missing name')
+        })
+    })
 
-  //       .catch(err => {
-  //         const res = err.response
-  //         expect(res).to.have.status(400)
-  //         expect(res.body.message).to.equal('missing field')
-  //       })
-  //   })
-
-  //   it('should not be allowed to post duplicate folder', function(){
-  //     const spy = chai.spy()
-  //     return chai.request(app).post('/v3/folders').send({name:'Archive'})
-
-  //       .catch(err =>{
-  //         const res = err.response
-  //         expect(res).to.have.status(404)
-  //         expect(res.body.message).to.equal('folder name has already exist')
-  //       })
-
-  //   })
-  // });
+    it('should not be allowed to post duplicate tags', function(){
+      return chai.request(app).post('/v3/tags').send({name:'foo'})
+        .catch(err =>{
+          const res = err.response
+          expect(res).to.have.status(404)
+          expect(res.body.message).to.equal('tag name has already exist')
+        })
+    })
+  });
   
   // describe('Update route on /v3/folders/:id', function(){
   

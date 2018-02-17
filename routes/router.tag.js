@@ -30,7 +30,25 @@ router.get('/tags/:id', (req,res,next) => {
 })
 
 router.post('/tags', (req,res,next) => {
-
+  const {name}= req.body
+  if(!name){
+    const err = new Error('missing name')
+    err.status = 400
+    return next(err)
+  }
+  const tag = {name}
+  Tag.create(tag)
+    .then(result => {
+      res.status(201).location(`${req.originalUrl}/${result._doc._id}`).end()
+    })
+    .catch(err => {
+      if(err.code === 11000){
+        err = new Error('tag name has already exist')
+        err.status = 404
+        return next(err)
+      }
+      next(err)
+    })
 })
 
 router.put('/tags', (req,res,next) => {
