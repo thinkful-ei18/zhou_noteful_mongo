@@ -19,7 +19,7 @@ router.get('/notes', (req, res, next) => {
     {score:{$meta:'textScore'}}
   )
     .sort({score:{$meta:'textScore'}})
-    .populate('folderId')
+    .populate('folderId')// field specified in schema
     .populate('tags')
     .then(results => {
       if(results.length) return res.status(200).json(results)

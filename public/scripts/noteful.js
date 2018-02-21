@@ -229,8 +229,7 @@ const noteful = (function () {
 
   function handleNewFolderSubmit() {
     $('.js-new-folder-form').on('submit', event => {
-      event.preventDefault();
-
+      
       const newFolderName = $('.js-new-folder-entry').val();
       api.create('/v3/folders', { name: newFolderName })
         .then(() => {
@@ -294,13 +293,11 @@ const noteful = (function () {
 
   function handleNewTagSubmit() {
     $('.js-new-tag-form').on('submit', event => {
-      event.preventDefault();
-
+      // event.preventDefault();
       const newTagName = $('.js-new-tag-entry').val();
       api.create('/v3/tags', { name: newTagName })
-        .then(() => {
-          return api.search('/v3/tags');
-        }).then(response => {
+        .then(() => api.search('/v3/tags'))
+        .then(response => {
           store.tags = response;
           render();
         })
