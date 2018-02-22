@@ -4,6 +4,9 @@
 const noteful = (function () {
 
   function render() {
+    console.log('he')
+    $('.signup-login').toggle(!store.authorized);
+
     const notesList = generateNotesList(store.notes, store.currentNote);
     $('.js-notes-list').html(notesList);
 
@@ -29,6 +32,27 @@ const noteful = (function () {
         return store.currentNote.tags.map(tag => tag.id);
       }
     });
+  }
+
+  //support functions for signup login
+  function showSuccessMessage(message) {
+    const el = $('.js-success-message');
+    el.text(message).show();
+    setTimeout(() => el.fadeOut('slow'), 3000);
+  }
+
+  function showFailureMessage(message) {
+    const el = $('.js-error-message');
+    el.text(message).show();
+    setTimeout(() => el.fadeOut('slow'), 3000);
+  }
+
+  function handleErrors(err) {
+    if (err.status === 401) {
+      store.authorized = false;
+      noteful.render();
+    }
+    showFailureMessage(err.responseJSON.message);
   }
 
   /**
@@ -137,7 +161,8 @@ const noteful = (function () {
         .then(response => {
           store.notes = response;
           render();
-        });
+        })
+        .catch(handleErrors)
     });
   }
 
@@ -164,7 +189,8 @@ const noteful = (function () {
           .then(response => {
             store.notes = response;
             render();
-          });
+          })
+          .catch(handleErrors)
       } else {
         api.create('/v3/notes', noteObj)
           .then(createResponse => {
@@ -174,7 +200,8 @@ const noteful = (function () {
           .then(response => {
             store.notes = response;
             render();
-          });
+          })
+          .catch(handleErrors)
       }
     });
   }
@@ -183,8 +210,9 @@ const noteful = (function () {
     $('.js-start-new-note-form').on('submit', event => {
       event.preventDefault();
       store.currentNote = {};
-      render();
-    });
+      render()
+    })
+    
   }
 
   function handleNoteDeleteClick() {
@@ -202,7 +230,8 @@ const noteful = (function () {
         .then(response => {
           store.notes = response;
           render();
-        });
+        })
+        .catch(handleErrors)
     });
   }
 
@@ -223,24 +252,29 @@ const noteful = (function () {
         .then(response => {
           store.notes = response;
           render();
-        });
+        })
+        .catch(handleErrors)
+
     });
   }
 
   function handleNewFolderSubmit() {
     $('.js-new-folder-form').on('submit', event => {
-      
+      event.preventDefault();
       const newFolderName = $('.js-new-folder-entry').val();
+      console.log('line265', newFolderName)
       api.create('/v3/folders', { name: newFolderName })
         .then(() => {
           $('.js-new-folder-entry').val();
-          return api.search('/v3/folders');
+          console.log('line 268')
+          return api.search('/v3/folders',{});
         }).then(response => {
           store.folders = response;
+          console.log(response)
           render();
-        }).catch(err => {
-          $('.js-error-message').text(err.responseJSON.message);
-        });
+        })
+        .catch(handleErrors)
+
     });
   }
 
@@ -265,8 +299,9 @@ const noteful = (function () {
         .then( ([notes, folders])  => {
           store.notes = notes;
           store.folders = folders;
-          render();
-        });
+          render()
+        })
+        .catch(handleErrors)
     });
   }
 
@@ -287,13 +322,14 @@ const noteful = (function () {
         .then(response => {
           store.notes = response;
           render();
-        });
+        })
+        .catch(handleErrors)
     });
   }
 
   function handleNewTagSubmit() {
     $('.js-new-tag-form').on('submit', event => {
-      // event.preventDefault();
+      event.preventDefault();
       const newTagName = $('.js-new-tag-entry').val();
       api.create('/v3/tags', { name: newTagName })
         .then(() => api.search('/v3/tags'))
@@ -301,9 +337,7 @@ const noteful = (function () {
           store.tags = response;
           render();
         })
-        .catch(err => {
-          console.error(err);
-        });
+        .catch(handleErrors)
     });
   }
 
@@ -330,7 +364,64 @@ const noteful = (function () {
         .then(response => {
           store.notes = response;
           render();
-        });
+        })
+        .catch(handleErrors)
+    });
+  }
+
+  function handleSignupSubmit() {
+    $('.js-signup-from').on('submit', event => {
+      event.preventDefault();
+
+      const signupForm = $(event.currentTarget);
+      const newUser = {
+        fullname: signupForm.find('.js-fullname-entry').val(),
+        username: signupForm.find('.js-username-entry').val(),
+        password: signupForm.find('.js-password-entry').val()
+      };
+      console.log(newUser)
+      api.create('/v3/users', newUser)
+        .then(response => {
+          signupForm[0].reset();
+          showSuccessMessage(`Thank you, ${response.fullname || response.username} for signing up!`);
+        })
+        .catch(handleErrors);
+    });
+  }
+
+  function handleLoginSubmit() {
+    $('.js-login-form').on('submit', event => {
+      event.preventDefault();
+
+      const loginForm = $(event.currentTarget);
+      const loginUser = {
+        username: loginForm.find('.js-username-entry').val(),
+        password: loginForm.find('.js-password-entry').val()
+      };
+      
+      api.create('/v3/login', loginUser)
+        .then(response => {
+          store.authToken = response.authToken; // <<== Add this...
+          console.log(store.authToken)
+          store.authorized = true;  // <<== And this!
+          loginForm[0].reset()
+          const payload = JSON.parse(atob(response.authToken.split('.')[1]));
+          store.currentUser = payload.user;
+  
+          return Promise.all([
+            api.search('/v3/notes'),
+            api.search('/v3/folders'),
+            api.search('/v3/tags')
+          ])
+            .then(([notes, folders, tags]) => {
+              store.notes = notes
+              store.folders = folders
+              store.tags = tags
+              render()
+            })
+        })
+
+        .catch(handleErrors)
     });
   }
   
@@ -348,12 +439,14 @@ const noteful = (function () {
     handleTagClick();
     handleNewTagSubmit();
     handleTagDeleteClick();
+    handleSignupSubmit()
+    handleLoginSubmit()
   }
 
   // This object contains the only exposed methods from this module:
   return {
     render: render,
-    bindEventListeners: bindEventListeners,
+    bindEventListeners: bindEventListeners
   };
 
-}());
+}())

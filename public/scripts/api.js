@@ -1,10 +1,11 @@
-/* global $ */
+/* global $ store*/
 'use strict';
 
 const api = (function () {
   const search = function(path, query) {
     return $.ajax({
       type: 'GET',
+      headers:{'Authorization': `Bearer ${store.authToken}`},
       url: path,
       dataType: 'json',
       data: query
@@ -13,13 +14,15 @@ const api = (function () {
   const details = function(path) {
     return $.ajax({
       type: 'GET',
+      headers:{'Authorization': `Bearer ${store.authToken}`},
       dataType: 'json',
-      url: path,
+      url: path
     });
   };
   const update = function(path, obj) {
     return $.ajax({
       type: 'PUT',
+      headers:{'Authorization': `Bearer ${store.authToken}`},
       url: path,
       contentType: 'application/json',
       dataType: 'json',
@@ -30,6 +33,7 @@ const api = (function () {
     return $.ajax({
       type: 'POST',
       url: path,
+      headers:{'Authorization': `Bearer ${store.authToken}`},
       contentType: 'application/json',
       dataType: 'json',
       processData:false,
@@ -39,8 +43,9 @@ const api = (function () {
   const remove = function(path) {
     return $.ajax({
       type: 'DELETE',
+      headers:{'Authorization': `Bearer ${store.authToken}`},
       dataType: 'json',
-      url: path,
+      url: path
     });
   };
   return {
@@ -51,3 +56,7 @@ const api = (function () {
     remove
   };
 }());
+
+
+  
+  

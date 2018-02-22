@@ -55,7 +55,7 @@ router.post('/users', (req,res,next) => {
       return User.create(newUser)
     })
     .then(result => {
-      return res.status(201).location(`/v3/users/${res.id}`).json(result.serialize())
+      return res.status(201).location(`/v3/users/${res.id}`).json(result)
     })
     .catch(err => {
       if(err.code === 11000) {

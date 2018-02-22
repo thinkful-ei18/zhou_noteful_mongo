@@ -1,5 +1,5 @@
 'use strict';
-
+require('dotenv').config()
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan')
@@ -11,6 +11,7 @@ const userRouter = require('./routes/router.users')
 const authRouter = require('./routes/router.auth')
 const passport = require('passport')
 const localStrategy  = require('./passport/local')
+const jwtStrategy = require('./passport/jwt')
 // Create an Express application
 const app = express();
 // Log all requests. Skip logging during
@@ -24,15 +25,22 @@ app.use(express.static('public'));
 // Parse request body
 app.use(express.json());
 
-//passport deploy local auth
+//passport deploy local auth  and jwt
 passport.use(localStrategy)
+passport.use(jwtStrategy)
 
-// Mount router on "/api"
-app.use('/v3',notesRouter);
-app.use('/v3',foldersRouter)
-app.use('/v3',tagRouter)
+// mount un-projected routes
 app.use('/v3',userRouter)
 app.use('/v3',authRouter)
+
+//endpoints below requires tokens
+
+app.use(passport.authenticate('jwt',{session:false, failWithError: true}))
+// Mount router on "/api"
+app.use('/v3',notesRouter)
+app.use('/v3',foldersRouter)
+app.use('/v3',tagRouter)
+
 
 // Catch-all 404
 app.use(function (req, res, next) {

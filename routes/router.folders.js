@@ -6,7 +6,8 @@ const router = express.Router()
 
 
 router.get('/folders', (req,res,next) => {
-  Folder.find()
+  const userId = req.user.id
+  Folder.find({userId})
     .sort({name:1})
     .then(results => {
       res.status(200).json(results)
@@ -18,9 +19,10 @@ router.get('/folders', (req,res,next) => {
 
 router.get('/folders/:id', (req,res,next) => {
   const reqId = req.params.id
+  const userId = req.user.id
   const err = validateIdFormat(reqId)
   if(err) return next(err)
-  Folder.findById(reqId)
+  Folder.findOne({_id: reqId, userId})
     .then(result => {
       if(result){
         return res.status(200).json(result)
@@ -34,7 +36,6 @@ router.get('/folders/:id', (req,res,next) => {
 
 
 router.put('/folders/:id', (req,res,next) => {
-  //@params: id, data, option {new: true}
   const reqId = req.params.id
   const {name} = req.body
   const err = validateIdFormat(reqId) || validateMissingField(name)
@@ -59,12 +60,13 @@ router.put('/folders/:id', (req,res,next) => {
 
 router.post('/folders', (req,res,next)=> {
   const {name} = req.body
+  const userId = req.user.id
   const err = validateMissingField(name)
   if(err) return next(err)
-  const newItem = {name}
+  const newItem = {name, userId}
   Folder.create(newItem)
     .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`).status(201).end()
+      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result)
     })
     .catch(err => {
       if(err.code === 11000){

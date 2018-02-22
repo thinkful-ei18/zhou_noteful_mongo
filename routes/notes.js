@@ -9,8 +9,9 @@ const Tag = require('../models/tag')
 const mongoose = require('mongoose')
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {
+  const userId = req.user.id
   const {searchTerm,folderId,tagId} = req.query
-  const filter = {}
+  const filter = {userId}
   if(searchTerm){filter['$text'] = {$search: searchTerm}}
   if(folderId){filter['folderId'] = folderId}
   if(tagId){filter['tags'] = {$eq: tagId}}
@@ -19,7 +20,7 @@ router.get('/notes', (req, res, next) => {
     {score:{$meta:'textScore'}}
   )
     .sort({score:{$meta:'textScore'}})
-    .populate('folderId')// field specified in schema
+    .select('title content created folderId tags')
     .populate('tags')
     .then(results => {
       if(results.length) return res.status(200).json(results)
@@ -30,13 +31,15 @@ router.get('/notes', (req, res, next) => {
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
+  const userId = req.user.id
   if(!mongoose.Types.ObjectId.isValid(noteId)){
     const err = new Error('The `id` is not valid')
     err.status = 400
     return next(err)
   }
-  Note.findById(noteId)
-    .populate('folderId')
+  console.log('id:',noteId, 'userId', userId)
+  Note.findOne({_id:noteId,userId})
+    .select('title content created folderId tags')
     .populate('tags')
     .then(result=> {
       if(!result){
@@ -52,9 +55,10 @@ router.get('/notes/:id', (req, res, next) => {
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
   const {title, content, folderId, tags} = req.body
+  const userId = req.user.id
   const err = validTitle(title)
   if(err) return next(err)
-  Note.create({title,content, folderId: folderId, tags})
+  Note.create({title,content, folderId, tags, userId})
     .then(result => {
       return res.location(`${req.originalUrl}/${result._doc._id}`).status(201).json(result)
     })
@@ -64,6 +68,7 @@ router.post('/notes', (req, res, next) => {
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
+  const userId = req.user.id
   const {title, content, folderId, tags} = req.body
   const err = validTitle(title)
   if(err) return next(err)
@@ -72,7 +77,7 @@ router.put('/notes/:id', (req, res, next) => {
     err2.status = 400
     return next(err2)
   }
-  const updateObj = {title, content, folderId: folderId, tags}
+  const updateObj = {title, content, folderId, tags, userId}
   Note.findByIdAndUpdate(noteId,updateObj,{new:true})
     .then(result => {
       return res.status(201).json(result)
@@ -83,15 +88,17 @@ router.put('/notes/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
+  const userId = req.user.id
   if(!mongoose.Types.ObjectId.isValid(noteId)){
     const err = new Error('improper id')
     err.status = 400
     return next(err)
   }
-  Note.findByIdAndRemove(noteId)
-    .then(()=> {
-      res.status(204).end()
+  Note.deleteOne({_id:noteId, userId})
+    .then(result => {
+      res.status(201).json({message: 'delete success'})
     })
+    .catch(next)
 })
 module.exports = router;
 //========== Validation methods =========================
