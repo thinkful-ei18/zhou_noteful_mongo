@@ -23,8 +23,7 @@ router.get('/notes', (req, res, next) => {
     .select('title content created folderId tags')
     .populate('tags')
     .then(results => {
-      if(results.length) return res.status(200).json(results)
-      next()
+      res.status(200).json(results)
     })
     .catch(err => next(err))
 });
