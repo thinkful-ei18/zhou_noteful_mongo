@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const noteSchema = new mongoose.Schema({
-  title: {type: String, index: true},
+  title: {type: String, index: true , required:true},
   content: {type: String, index: true},
   created: {type: Date, default: Date.now},
   folderId:{type: mongoose.Schema.Types.ObjectId, ref:'Folder'},

@@ -69,7 +69,7 @@ router.put('/tags/:id', (req,res,next) => {
     return next(err)
   }
   const tag = {name}
-  Tag.findByIdAndUpdate(tagId,tag,{new:true})
+  Tag.findOneAndUpdate({_id:tagId, userId},tag,{new:true})
     .then(result => {
       if(result){
         return res.status(201).json(result)
@@ -90,12 +90,13 @@ router.put('/tags/:id', (req,res,next) => {
 
 router.delete('/tags/:id', (req,res,next) => {
   const tagId = req.params.id
+  const userId = req.user.id
   if(!mongoose.Types.ObjectId.isValid(tagId)){
     const err = new Error('improper formatted id')
     err.status = 400
     return next(err)
   }
-  Tag.findByIdAndRemove(tagId)
+  Tag.findOneAndRemove({_id:tagId, userId})
     .then(() => {
       console.log('I success delete tagid')
       return Note.updateMany(
@@ -104,7 +105,7 @@ router.delete('/tags/:id', (req,res,next) => {
       )
     })
     .then(() => {
-      res.status(204).end()
+      res.status(204).json({message: 'delete success'})
     })
     .catch(next)
 })

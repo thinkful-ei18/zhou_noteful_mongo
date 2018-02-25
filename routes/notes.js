@@ -37,7 +37,6 @@ router.get('/notes/:id', (req, res, next) => {
     err.status = 400
     return next(err)
   }
-  console.log('id:',noteId, 'userId', userId)
   Note.findOne({_id:noteId,userId})
     .select('title content created folderId tags')
     .populate('tags')
@@ -54,22 +53,33 @@ router.get('/notes/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
-  const {title, content, folderId, tags} = req.body
+  const {title, content, folderId, tags=[]} = req.body
   const userId = req.user.id
   const err = validTitle(title)
   if(err) return next(err)
-  Note.create({title,content, folderId, tags, userId})
+  const newNote = {title, content, folderId: folderId?folderId:null, tags, userId}
+  Promise.all([validateFolder(folderId, userId), validateTags(tags, userId)])
+    .then( () => {
+      return Note.create(newNote)
+    })
     .then(result => {
       return res.location(`${req.originalUrl}/${result._doc._id}`).status(201).json(result)
     })
-    .catch(next)
-});
+    .catch(err => {
+      if(err.reason === 'invalid action'){
+        err.status = 422
+        return next(err)
+      }
+      next(err)
+    })
+  
+})
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
   const userId = req.user.id
-  const {title, content, folderId, tags} = req.body
+  const {title, content, folderId, tags=[]} = req.body
   const err = validTitle(title)
   if(err) return next(err)
   if(!mongoose.Types.ObjectId.isValid(noteId)){
@@ -77,14 +87,28 @@ router.put('/notes/:id', (req, res, next) => {
     err2.status = 400
     return next(err2)
   }
-  const updateObj = {title, content, folderId, tags, userId}
-  Note.findByIdAndUpdate(noteId,updateObj,{new:true})
-    .then(result => {
-      return res.status(201).json(result)
-    })
-    .catch(next)
-});
 
+  const updateObj = {title, content, folderId:folderId?folderId:null, tags}
+  Promise.all([validateFolder(folderId,userId), validateTags(tags,userId)])
+    .then(() => {
+      return Note.findOneAndUpdate({_id:noteId, userId},updateObj,{new:true})
+    })
+    .then(result => {
+      if(result){
+        return res.status(201).json(result)
+      }
+      const err = new Error('The item does not exist')
+      err.status = 400
+      return next(err)
+    })
+    .catch(err => {
+      if(err.reason === 'invalid action'){
+        err.status = 422
+        return next(err)
+      }
+      next(err)
+    })
+})
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/notes/:id', (req, res, next) => {
   const noteId = req.params.id
@@ -94,9 +118,16 @@ router.delete('/notes/:id', (req, res, next) => {
     err.status = 400
     return next(err)
   }
-  Note.deleteOne({_id:noteId, userId})
-    .then(result => {
-      res.status(201).json({message: 'delete success'})
+  Note.findOneAndRemove({_id:noteId,userId})
+    .then(result =>{
+      if(!result){
+        const err = new Error('This item does not exist')
+        err.status = 400
+        return next(err)
+      }
+      res.status(204).json({
+        message: 'delete success',
+        content: result})
     })
     .catch(next)
 })
@@ -108,4 +139,36 @@ function validTitle(title){
     err.status = 400
     return err
   }
+}
+
+function validateFolder(fId,uId) {
+  if(!fId){
+    return Promise.resolve()
+  }
+  return Folder.findOne({_id:fId, userId:uId})
+    .then(result => {
+      if(!result) {
+        return Promise.reject({
+          reason:'invalid action',
+          message: 'invalid to assign this folder'
+        })
+      }
+    })
+}
+
+function validateTags(tags, uId) {
+  if(tags.length === 0){
+    return Promise.resolve()
+  }
+  const tagPromises = tags.map( tag =>{
+    return Tag.findOne({_id: tag, userId: uId})} )
+  return Promise.all(tagPromises)
+    .then(results => {
+      for(let result of results) {
+        if(!result) return Promise.reject({
+          reason: 'invalid action',
+          message:' invalid to assign one of the tags'
+        })
+      }
+    })
 }

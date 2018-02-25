@@ -3,10 +3,10 @@ const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema({
   fullname:{type:String, default:''},
-  username:{type:String, required:true, unique:true},
+  username:{type:String, required:true},
   password:{type:String, required:true}
 })
-
+userSchema.index({username: 1}, {unique:true})
 userSchema.set('toObject',{
   transform:function(doc, ret){
     ret.id = ret._id

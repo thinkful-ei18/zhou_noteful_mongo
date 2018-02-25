@@ -3,7 +3,7 @@ require('dotenv').config()
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan')
-const { PORT, MONGODB_URL, TEST_DATABASE_URL } = require('./config');
+const { PORT, MONGODB_URL} = require('./config');
 const notesRouter = require('./routes/notes');
 const foldersRouter = require('./routes/router.folders')
 const tagRouter = require('./routes/router.tag')

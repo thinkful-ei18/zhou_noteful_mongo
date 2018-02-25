@@ -15,9 +15,23 @@ mongoose.connect(MONGODB_URL)
   .then(()=> Folder.createIndexes())
   .then(()=> Tag.insertMany(seedTags))
   .then(()=> Tag.createIndexes())
-  .then(()=> User.insertMany(seedUsers))
   .then(()=> Note.insertMany(seedNotes))
   .then(()=> Note.createIndexes())
+  .then(()=> {
+    const usersInsert = seedUsers.map(user => {
+      return User.hashPassword(user.password)
+        .then(hash => {
+          const newUser = {
+            _id:user._id,
+            fullname: user.fullname,
+            username: user.username,
+            password: hash
+          }
+          return User.create(newUser)
+        })
+    })
+    return Promise.all(usersInsert)
+  })
   .then(()=> mongoose.disconnect())
   .catch(err => {
     console.error(`Error: ${err.message}`)

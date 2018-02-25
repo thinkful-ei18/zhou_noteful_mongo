@@ -179,7 +179,7 @@ const noteful = (function () {
         folderId: editForm.find('.js-note-folder-entry').val(),
         tags: editForm.find('.js-note-tags-entry').val()
       };
-
+      console.log(noteObj)
       if (store.currentNote.id) {
         api.update(`/v3/notes/${noteObj.id}`, noteObj)
           .then(updateResponse => {

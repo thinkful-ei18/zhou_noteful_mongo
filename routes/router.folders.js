@@ -34,14 +34,15 @@ router.get('/folders/:id', (req,res,next) => {
     .catch(next)
 })
 
-
 router.put('/folders/:id', (req,res,next) => {
   const reqId = req.params.id
+  const userId = req.user.id
   const {name} = req.body
   const err = validateIdFormat(reqId) || validateMissingField(name)
   if(err) return next(err)
   const update = {name}
-  Folder.findByIdAndUpdate(reqId,update,{new:true})
+
+  Folder.findOneAndUpdate({_id:reqId, userId}, update, {new:true})
     .then(result => {
       if(result){
         return res.status(201).json(result)
@@ -80,9 +81,10 @@ router.post('/folders', (req,res,next)=> {
 
 router.delete('/folders/:id', (req,res,next) => {
   const reqId = req.params.id
+  const userId = req.user.id
   const err = validateIdFormat(reqId)
   if(err) return next(err)
-  Folder.findByIdAndRemove(reqId)
+  Folder.findOneAndRemove({_id:reqId, userId})
     .then(() => {
       return Note.deleteMany({folderId: reqId})
     })
